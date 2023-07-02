@@ -1,10 +1,12 @@
 # Raine Adams
 # A program to read minecraft block textures and expand them so 1 pixel = 1 block
+# code to find average colors based on tutorial at https://towardsdatascience.com/finding-most-common-colors-in-python-47ea0767a06a
 
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import PIL
+from sklearn.cluster import KMeans
 
 
 def display_img_comparison(img_1, img_2):
@@ -29,3 +31,59 @@ img = cv2.resize(img, dim, interpolation=cv2.INTER_NEAREST)
 img_2 = cv2.resize(img_2, dim, interpolation=cv2.INTER_NEAREST)
 
 display_img_comparison(img, img_2)
+
+
+# method 1 - average color
+
+temp_img = img.copy()
+# create image with average color of img 1
+temp_img[:, :, 0], temp_img[:, :, 1], temp_img[:,
+                                               :, 2] = np.average(img, axis=(0, 1))
+
+temp_img_2 = img_2.copy()
+# create image with average color of img 1
+temp_img_2[:, :, 0], temp_img_2[:, :, 1], temp_img_2[:,
+                                                     :, 2] = np.average(img_2, axis=(0, 1))
+
+display_img_comparison(img, temp_img)
+display_img_comparison(img_2, temp_img_2)
+
+
+# method 2 - pixel frequency
+
+# reshape image data to get list of 3 values for R G B
+temp_img = img.copy()
+unique, counts = np.unique(temp_img.reshape(-1, 3), axis=0, return_counts=True)
+# create image with most common color
+temp_img[:, :, 0], temp_img[:, :, 1], temp_img[:,
+                                               :, 2] = unique[np.argmax(counts)]
+
+temp_img_2 = img_2.copy()
+unique, counts = np.unique(temp_img_2.reshape(-1, 3),
+                           axis=0, return_counts=True)
+temp_img_2[:, :, 0], temp_img_2[:, :,
+                                1], temp_img_2[:, :, 2] = unique[np.argmax(counts)]
+
+display_img_comparison(img, temp_img)
+display_img_comparison(img_2, temp_img_2)
+
+
+# method 3 - k-means clustering
+
+clt = KMeans(n_clusters=5)
+
+
+def image_palette(clusters):
+    width = 320
+    palette = np.zeros((50, width, 3), np.uint8)
+    steps = width / clusters.cluster_centers_.shape[0]
+    for i, centers in enumerate(clusters.cluster_centers_):
+        palette[:, int(i * steps):(int((i + 1) * steps)), :] = centers
+    return palette
+
+
+cluster_1 = clt.fit(img.reshape(-1, 3))
+display_img_comparison(img, image_palette(cluster_1))
+
+cluster_2 = clt.fit(img_2.reshape(-1, 3))
+display_img_comparison(img_2, image_palette(cluster_2))
