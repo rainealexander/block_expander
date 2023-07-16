@@ -2,6 +2,7 @@
 # A program to read minecraft block textures and expand them so 1 pixel = 1 block
 # code to find average colors based on tutorial at https://towardsdatascience.com/finding-most-common-colors-in-python-47ea0767a06a
 
+from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
@@ -87,3 +88,31 @@ display_img_comparison(img, image_palette(cluster_1))
 
 cluster_2 = clt.fit(img_2.reshape(-1, 3))
 display_img_comparison(img_2, image_palette(cluster_2))
+
+# 3B - k-means with color percent
+
+
+def palette_percent(k_cluster):
+    width = 320
+    palette = np.zeros((50, width, 3), np.uint8)
+
+    n_pixels = len(k_cluster.labels_)
+    counter = Counter(k_cluster.labels_)  # count pixels per cluster
+    percent = {}
+    for i in counter:
+        percent[i] = np.round(counter[i] / n_pixels, 2)
+    percent = dict(sorted(percent.items()))
+
+    step = 0
+    for i, centers in enumerate(k_cluster.cluster_centers_):
+        palette[:, step:int(step + percent[i] * width + 1), :] = centers
+        step += int(percent[i] * width + 1)
+
+    return palette
+
+
+cluster_1 = clt.fit(img.reshape(-1, 3))
+display_img_comparison(img, palette_percent(cluster_1))
+
+cluster_2 = clt.fit(img_2.reshape(-1, 3))
+display_img_comparison(img_2, palette_percent(cluster_2))
