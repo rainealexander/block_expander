@@ -57,8 +57,9 @@ temp_img_2 = img_2.copy()
 temp_img_2[:, :, 0], temp_img_2[:, :, 1], temp_img_2[:,
                                                      :, 2] = np.average(img_2, axis=(0, 1))
 
-display_img_comparison(img, temp_img)
-display_img_comparison(img_2, temp_img_2)
+temp_img = cv2.resize(temp_img, dim, interpolation=cv2.INTER_NEAREST)
+temp_img_2 = cv2.resize(temp_img_2, dim, interpolation=cv2.INTER_NEAREST)
+display_img_comparison(img1_big, temp_img, img2_big, temp_img_2)
 
 
 # method 2 - pixel frequency
@@ -76,8 +77,7 @@ unique, counts = np.unique(temp_img_2.reshape(-1, 3),
 temp_img_2[:, :, 0], temp_img_2[:, :,
                                 1], temp_img_2[:, :, 2] = unique[np.argmax(counts)]
 
-display_img_comparison(img, temp_img)
-display_img_comparison(img_2, temp_img_2)
+display_img_comparison(img1_big, temp_img, img2_big, temp_img_2)
 
 
 # method 3 - k-means clustering
@@ -86,8 +86,8 @@ clt = KMeans(n_clusters=5)
 
 
 def image_palette(clusters):
-    width = 320
-    palette = np.zeros((50, width, 3), np.uint8)
+    width = 512
+    palette = np.zeros((128, width, 3), np.uint8)
     steps = width / clusters.cluster_centers_.shape[0]
     for i, centers in enumerate(clusters.cluster_centers_):
         palette[:, int(i * steps):(int((i + 1) * steps)), :] = centers
@@ -95,17 +95,18 @@ def image_palette(clusters):
 
 
 cluster_1 = clt.fit(img.reshape(-1, 3))
-display_img_comparison(img, image_palette(cluster_1))
-
+temp_img = image_palette(cluster_1)
 cluster_2 = clt.fit(img_2.reshape(-1, 3))
-display_img_comparison(img_2, image_palette(cluster_2))
+temp_img_2 = image_palette(cluster_2)
+display_img_comparison(img1_big, temp_img,
+                       img2_big, temp_img_2)
 
 # 3B - k-means with color percent
 
 
 def palette_percent(k_cluster):
-    width = 320
-    palette = np.zeros((50, width, 3), np.uint8)
+    width = 512
+    palette = np.zeros((128, width, 3), np.uint8)
 
     n_pixels = len(k_cluster.labels_)
     counter = Counter(k_cluster.labels_)  # count pixels per cluster
@@ -123,10 +124,10 @@ def palette_percent(k_cluster):
 
 
 cluster_1 = clt.fit(img.reshape(-1, 3))
-display_img_comparison(img, palette_percent(cluster_1))
-
+temp_img = palette_percent(cluster_1)
 cluster_2 = clt.fit(img_2.reshape(-1, 3))
-display_img_comparison(img_2, palette_percent(cluster_2))
+temp_img_2 = palette_percent(cluster_2)
+display_img_comparison(img1_big, temp_img, img2_big, temp_img_2)
 
 
 # 4 - average of color percent cluster
@@ -136,11 +137,10 @@ cluster_1 = clt.fit(img.reshape(-1, 3))
 temp_img = palette_percent(cluster_1)
 temp_img[:, :, 0], temp_img[:, :, 1], temp_img[:,
                                                :, 2] = np.average(img, axis=(0, 1))
-display_img_comparison(img, temp_img)
-# create image with average color of img 1
 
 cluster_2 = clt.fit(img_2.reshape(-1, 3))
 temp_img_2 = palette_percent(cluster_2)
 temp_img_2[:, :, 0], temp_img_2[:, :, 1], temp_img_2[:,
                                                      :, 2] = np.average(img_2, axis=(0, 1))
-display_img_comparison(img_2, temp_img_2)
+
+display_img_comparison(img1_big, temp_img, img2_big, temp_img_2)
